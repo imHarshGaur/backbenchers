@@ -1,0 +1,17 @@
+node_modules/
+.env
+.env.*
+!.env.example
+work/
+test-results/
+unity/Library/
+unity/Temp/
+unity/Obj/
+unity/Logs/
+unity/UserSettings/
+unity/Builds/
+unity/**/*.csproj
+*.sln
+.DS_Store
+tests/dotnet/bin/
+tests/dotnet/obj/

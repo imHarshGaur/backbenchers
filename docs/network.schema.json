@@ -1,0 +1,771 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/imHarshGaur/backbenchers/docs/network.schema.json",
+  "title": "BACKBENCHER v0.1 room snapshots and game intents",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/StateEnvelope"
+    },
+    {
+      "$ref": "#/$defs/ActionEnvelope"
+    }
+  ],
+  "$defs": {
+    "Seat": {
+      "type": "string",
+      "pattern": "^[0-5]$"
+    },
+    "Role": {
+      "enum": [
+        "Raja",
+        "Mantri",
+        "Sipahi",
+        "Chor",
+        "Senapati",
+        "Daroga",
+        "Joker"
+      ]
+    },
+    "PlayerState": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Seat"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[a-fA-F0-9]{6}$"
+        },
+        "score": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "color",
+        "score"
+      ],
+      "additionalProperties": false
+    },
+    "LobbyPlayer": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Seat"
+        },
+        "name": {
+          "type": "string"
+        },
+        "ready": {
+          "type": "boolean"
+        },
+        "bot": {
+          "type": "boolean"
+        },
+        "connected": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "ready",
+        "bot",
+        "connected"
+      ],
+      "additionalProperties": false
+    },
+    "Room": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[A-HJ-NP-Z2-9]{4}$"
+        },
+        "host": {
+          "$ref": "#/$defs/Seat"
+        },
+        "kind": {
+          "enum": [
+            "pen",
+            "dots",
+            "rmcs"
+          ]
+        },
+        "stake": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "deadline": {
+          "type": "integer"
+        },
+        "players": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LobbyPlayer"
+          },
+          "minItems": 1,
+          "maxItems": 6
+        },
+        "wallets": {
+          "type": "object",
+          "patternProperties": {
+            "^[0-5]$": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "pot": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "code",
+        "host",
+        "kind",
+        "stake",
+        "version",
+        "players",
+        "wallets",
+        "pot"
+      ],
+      "additionalProperties": false
+    },
+    "Point": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "additionalProperties": false
+    },
+    "Segment": {
+      "type": "object",
+      "properties": {
+        "a": {
+          "$ref": "#/$defs/Point"
+        },
+        "b": {
+          "$ref": "#/$defs/Point"
+        }
+      },
+      "required": [
+        "a",
+        "b"
+      ],
+      "additionalProperties": false
+    },
+    "Pen": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Seat"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "type": {
+          "enum": [
+            "ballpoint",
+            "gel",
+            "fountain"
+          ]
+        },
+        "alive": {
+          "type": "boolean"
+        },
+        "lives": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "shield": {
+          "type": "boolean"
+        },
+        "segments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Segment"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "id",
+        "x",
+        "y",
+        "type",
+        "alive",
+        "lives",
+        "shield",
+        "segments"
+      ],
+      "additionalProperties": false
+    },
+    "Hazard": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "coffee",
+            "portal",
+            "shield"
+          ]
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "r": {
+          "type": "number"
+        },
+        "used": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind",
+        "x",
+        "y",
+        "r"
+      ],
+      "additionalProperties": false
+    },
+    "PenRocketState": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "pen"
+        },
+        "phase": {
+          "enum": [
+            "playing",
+            "finished"
+          ]
+        },
+        "players": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PlayerState"
+          },
+          "minItems": 2,
+          "maxItems": 6
+        },
+        "winners": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Seat"
+          },
+          "minItems": 0,
+          "maxItems": 6
+        },
+        "last": {
+          "type": "string"
+        },
+        "turn": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "turns": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "margin": {
+          "type": "integer",
+          "minimum": 28,
+          "maximum": 285
+        },
+        "pens": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Pen"
+          },
+          "minItems": 2,
+          "maxItems": 6
+        },
+        "hazards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Hazard"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "kind",
+        "phase",
+        "players",
+        "winners",
+        "last",
+        "turn",
+        "turns",
+        "margin",
+        "pens",
+        "hazards"
+      ],
+      "additionalProperties": false
+    },
+    "DotsState": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "dots"
+        },
+        "phase": {
+          "enum": [
+            "playing",
+            "finished"
+          ]
+        },
+        "players": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PlayerState"
+          },
+          "minItems": 2,
+          "maxItems": 6
+        },
+        "winners": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Seat"
+          },
+          "minItems": 0,
+          "maxItems": 6
+        },
+        "last": {
+          "type": "string"
+        },
+        "size": {
+          "enum": [
+            4,
+            6
+          ]
+        },
+        "turn": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "edges": {
+          "type": "object",
+          "patternProperties": {
+            "^[hv]:[0-5]:[0-5]$": {
+              "$ref": "#/$defs/Seat"
+            }
+          },
+          "additionalProperties": false
+        },
+        "boxes": {
+          "type": "object",
+          "patternProperties": {
+            "^(?:[0-9]|1[0-9]|2[0-4])$": {
+              "$ref": "#/$defs/Seat"
+            }
+          },
+          "additionalProperties": false
+        },
+        "star": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "bomb": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 24
+        },
+        "bombUsed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind",
+        "phase",
+        "players",
+        "winners",
+        "last",
+        "size",
+        "turn",
+        "edges",
+        "boxes",
+        "star",
+        "bomb",
+        "bombUsed"
+      ],
+      "additionalProperties": false
+    },
+    "RoundResult": {
+      "type": "object",
+      "properties": {
+        "round": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 7
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Role"
+          },
+          "minItems": 4,
+          "maxItems": 6
+        },
+        "scores": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "minItems": 4,
+          "maxItems": 6
+        },
+        "caught": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "round",
+        "roles",
+        "scores",
+        "caught"
+      ],
+      "additionalProperties": false
+    },
+    "RMCSState": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "rmcs"
+        },
+        "phase": {
+          "enum": [
+            "reveal",
+            "guess",
+            "result",
+            "finished"
+          ]
+        },
+        "players": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PlayerState"
+          },
+          "minItems": 4,
+          "maxItems": 6
+        },
+        "winners": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Seat"
+          },
+          "minItems": 0,
+          "maxItems": 6
+        },
+        "last": {
+          "type": "string"
+        },
+        "round": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 7
+        },
+        "rounds": {
+          "enum": [
+            5,
+            7
+          ]
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Role"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "minItems": 4,
+          "maxItems": 6
+        },
+        "myRole": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Role"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "revealIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6
+        },
+        "guess": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Seat"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "roundScores": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "minItems": 4,
+              "maxItems": 6
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "bets": {
+          "type": "object",
+          "patternProperties": {
+            "^[0-5]$": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "swapUsed": {
+          "type": "boolean"
+        },
+        "swapped": {
+          "type": "boolean"
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RoundResult"
+          },
+          "minItems": 0,
+          "maxItems": 7
+        }
+      },
+      "required": [
+        "kind",
+        "phase",
+        "players",
+        "winners",
+        "last",
+        "round",
+        "rounds",
+        "roles",
+        "revealIndex",
+        "guess",
+        "roundScores",
+        "bets",
+        "swapUsed",
+        "swapped",
+        "history"
+      ],
+      "additionalProperties": false
+    },
+    "GameState": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/PenRocketState"
+        },
+        {
+          "$ref": "#/$defs/DotsState"
+        },
+        {
+          "$ref": "#/$defs/RMCSState"
+        }
+      ]
+    },
+    "StateEnvelope": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "state"
+        },
+        "you": {
+          "$ref": "#/$defs/Seat"
+        },
+        "room": {
+          "$ref": "#/$defs/Room"
+        },
+        "game": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GameState"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "you",
+        "room",
+        "game"
+      ],
+      "additionalProperties": false
+    },
+    "Action": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "flick"
+            },
+            "dx": {
+              "type": "number"
+            },
+            "dy": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "type",
+            "dx",
+            "dy"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "edge"
+            },
+            "key": {
+              "type": "string",
+              "pattern": "^[hv]:[0-5]:[0-5]$"
+            }
+          },
+          "required": [
+            "type",
+            "key"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "reveal"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "guess"
+            },
+            "target": {
+              "$ref": "#/$defs/Seat"
+            }
+          },
+          "required": [
+            "type",
+            "target"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "swap"
+            },
+            "target": {
+              "$ref": "#/$defs/Seat"
+            }
+          },
+          "required": [
+            "type",
+            "target"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "bet"
+            },
+            "caught": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "caught"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ActionEnvelope": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "action"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "action": {
+          "$ref": "#/$defs/Action"
+        }
+      },
+      "required": [
+        "type",
+        "version",
+        "action"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

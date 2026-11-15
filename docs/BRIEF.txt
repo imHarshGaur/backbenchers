@@ -1,0 +1,53 @@
+ROLE & OBJECTIVE:
+You are a Principal Game Architect, Senior Unity/Godot & Full-Stack Multiplayer Engineer, and UI/UX Lead. Your mission is to design and generate the complete, production-ready codebase and architecture for a viral 2D mobile party game Android APK titled "BACKBENCHER".
+
+CORE VISION & AESTHETIC:
+- Theme: Pure 90s/2000s Indian school-bench nostalgia combined with high-stakes competitive tension.
+- Visual Style: Top-down 2D hand-crafted tactile stationery aesthetic. Scratched wooden school desk background, ruled Classmate-style notebook pages, red margin lines, ink smudges, folded paper chits, and geometry box props.
+- Audio/Haptic Direction: Tactile ASMR sound triggers (ballpoint scratch, paper crumple, desk thud, school bell) paired with crisp haptic vibrations on every impact or cut.
+- High-Stakes Hook: Every match has an entry stake ("Chalk Dust" / "Tiffin Coins") pooled into a central desk pot. Include a "Double or Nothing" instant rematch system and escalating round multipliers.
+
+GAME ARCHITECTURE & CORE MODULES:
+Build a modular architecture supporting 2 to 6 players in both:
+1. OFFLINE PASS-AND-PLAY (Single-device hot-seat with privacy screen curtains for hidden roles).
+2. ONLINE MULTIPLAYER ROOMS (4-digit alphanumeric room codes, low-latency state synchronization via Firebase Realtime Database / Photon / WebSockets).
+
+THE 3 CORE GAMES (ALL IN ONE APK):
+
+GAME 1: PEN ROCKET (LINE-SLICING BATTLE ROYALE)
+- Mechanic: Players hold and drag back on their vertical pen tip on a ruled notebook page to set angle and flick power, then release. The pen tip slides across the paper, leaving a permanent colored ink line behind it.
+- Win Condition: If your sliding pen tip intersects/slices through an opponent's existing ink line, their line shatters and they are eliminated (or lose a life in 4–6 player Royale). Last pen standing wins the pot.
+- High-Stakes Twists:
+  - Shrinking "Red Margin" danger zone every 3 turns that eliminates pens outside the border.
+  - Interactive Desk Hazards: Coffee cup rings (deflect trajectory), Compass Holes (teleport ink trail across the page), and Whitener Drops (grants a 1-hit shield).
+  - Pen Classes: Ballpoint (balanced), Gel Pen (long slide, slight curve), Fountain Pen (short slide, requires 2 cuts to break).
+
+GAME 2: DOTS & BOXES (CHAUKADI BLITZ)
+- Mechanic: Classic grid of dots on graph paper (4x4 for fast 1v1, 6x6 for 3–4 players). Players tap between two adjacent dots to draw a pen stroke. Completing the 4th side of a square claims the box with the player's stamped initial and awards a bonus turn.
+- High-Stakes Twists:
+  - "Speed Blitz" 6-second turn timer (running out of time auto-draws a random line).
+  - "Golden Star Boxes" (2x points) and "Ink Bomb Dots" (completing a box next to a bomb blasts open neighboring lines).
+
+GAME 3: RAJA MANTRI CHOR SIPAHI (RMCS - 4 TO 6 PLAYERS)
+- Mechanic: Folded paper chits drop onto the wooden desk and shuffle with physics. Each player picks/receives a secret chit.
+- Roles & Points:
+  - 4-Player Mode: Raja (1000 pts), Mantri (800 pts), Sipahi (500 pts), Chor (0 pts).
+  - 5-Player Expansion: Adds Senapati (650 pts).
+  - 6-Player Expansion: Adds Daroga (400 pts) & Joker/Bhatija (250 pts).
+- Gameplay Flow:
+  1. Raja reveals their chit ("Mera Mantri Kaun?").
+  2. Mantri reveals themselves and has 15 seconds to interrogate/read the table and tap the player they suspect is the Chor.
+  3. High-Stakes Twist: Once per 5-round match, the Chor can trigger a "Chit Swap" bluff card before the Mantri guesses, or players can place a side-bet ("Chalk Bet") on whether the Mantri will catch the Chor.
+  4. If Mantri guesses right, points stay as drawn. If wrong, Chor steals Mantri's 800 points!
+  5. Multi-round leaderboard (5 or 7 rounds) crowns the "Class Topper".
+
+SYSTEMS & UI SCREENS TO GENERATE:
+1. Interactive Wooden Desk Home Hub: Tapping the Open Notebook launches Pen Rocket; Graph Pad launches Dots & Boxes; Folded Chits launch RMCS; Pencil Box opens the Stationery Locker (unlockable pens, paper themes, desk stickers).
+2. Unified Room & Lobby Manager: Create Room (generates 4-char code + shareable invite text), Join Room, Player Ready toggles, and AI Bot backfill if fewer than 4–6 humans join.
+3. Unified Game State Machine & Network Sync Layer: Clean JSON state payloads for turn sync, line coordinates, grid edges, and encrypted role assignments (so clients cannot cheat/peek at RMCS chits in memory).
+4. Economy & Progression: Daily "Tiffin Box" reward, Chalk Coin stakes, Win Streak badges ("Backbench Legend"), and match summary screen with instant "Double Stakes Rematch".
+
+OUTPUT INSTRUCTIONS:
+1. First, provide the complete System Architecture Diagram, Folder Structure, and Network Data Schema (JSON models for Rooms, PlayerState, PenRocketState, DotsState, RMCSState).
+2. Second, provide the complete, well-commented, error-free source code for all core controllers, physics/line-intersection math, AI bots, network sync manager, and UI state controllers. (Specify engine: Unity C# 2D URP or HTML5/Capacitor/Godot — default to Unity C# 2D URP with complete scripts ready to drop into Scenes, plus a playable single-file HTML5/JS Canvas test build so I can test the exact gameplay immediately).
+3. Do not use placeholders or "// TODO" comments. Write complete, functional logic for line-segment intersection detection, grid box completion, RMCS role shuffling, and stake pot calculation.

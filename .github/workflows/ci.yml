@@ -1,0 +1,28 @@
+name: Rules and browser checks
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: git diff --exit-code -- dist/backbencher.html
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet run --project tests/dotnet/Rules.csproj
+      - run: npx playwright install --with-deps chromium
+      - name: Browser smoke checks
+        run: |
+          npm start > /tmp/backbencher-server.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            curl --fail http://localhost:3000/health && break
+            sleep 1
+          done
+          CHROMIUM_PATH=$(node -e "process.stdout.write(require('playwright').chromium.executablePath())") npm run test:browser
