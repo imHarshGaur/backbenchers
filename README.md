@@ -6,6 +6,8 @@ This repository contains a playable browser edition, an authoritative WebSocket 
 
 ## Play now
 
+**[Open the hosted game](https://backbencher-play.biblespath9.chatgpt.site)** — no download required. This private Site is available to the owner through the same ChatGPT account. Play with bots or pass one device between friends. Online rooms still require the Node server below.
+
 Download [`dist/backbencher.html`](dist/backbencher.html), then open it in a browser. All three offline games work without a server or installation. Use touch or a mouse; choose bots or pass-and-play. The standalone file has no required network assets.
 
 For online rooms and the development UI:
@@ -50,6 +52,7 @@ The native prototype uses a programmatic IMGUI presentation so its controllers a
 ```sh
 npm test                                      # JS rules and live WebSocket integration
 npm run build                                 # regenerate the checked-in single-file build
+npm run build:site                            # regenerate hosted dist/index.html
 npm start                                     # keep running in another terminal
 npm run test:browser                           # browser game flows, mobile, online room
 # If Chromium is not at /usr/bin/chromium:

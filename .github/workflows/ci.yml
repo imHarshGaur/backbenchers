@@ -11,8 +11,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: npm run build
-      - run: git diff --exit-code -- dist/backbencher.html
+      - run: npm run build:site
+      - run: git diff --exit-code -- dist/backbencher.html dist/index.html
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'

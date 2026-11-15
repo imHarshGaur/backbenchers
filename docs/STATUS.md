@@ -34,3 +34,7 @@
 3. Replace native IMGUI with the notebook/wood presentation and animate resolved trajectories/chits without altering authoritative results.
 4. Add accounts, transactional coin persistence, room recovery, origin/TLS deployment configuration, and operational monitoring.
 5. Run adversarial client tests, latency/soak testing, and multiplayer device QA before calling the product production-ready.
+
+## Hosted launch fix
+
+The GitHub raw-file link serves source/download content and is not a hosted game. A private Sites deployment now serves `dist/index.html` at https://backbencher-play.biblespath9.chatgpt.site. This edition hides unsupported online-room controls and preserves bots and pass-and-play. The multiplayer server remains separate. Deployment was confirmed by Sites; hosted browser QA was unavailable because the managed desktop tool was not exposed. All 25 Node checks passed after the change.
