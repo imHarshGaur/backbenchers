@@ -16,7 +16,7 @@ The source brief is preserved in `BRIEF.txt`. These decisions remove ambiguities
 | Side bets | Once per round per player, ±50 **score points** on catch/escape. They do not debit the coin wallet; this keeps the entry pot conserved and separate from round scoring. |
 | Chit swap | A single swap per match, available to the current Chor. Can target any unrevealed role except Raja/Mantri. The swap is announced, but its two identities are not. Players can privately recheck their chit. |
 | RMCS points | Correct: each role keeps its base points. Wrong: Mantri gets 0 and Chor gets 800; everyone else retains base points. Bets then add/subtract 50. |
-| Timers | Dots 6s, Mantri 15s, pen 30s, online chit handoff 30s. Timeout uses a legal bot action. Offline private curtains pause the clock. |
+| Timers | Web local Dots/Pen default to Relaxed with no human timeout. Optional Timed mode and online rooms use Dots 6s / Pen 30s. Mantri has 15s. Local pause/privacy/background screens freeze the clock. Bots still take their own turns. The Unity harness retains its original timed setup. |
 | Coins | Free play currency only. Initial online/guest wallet 1,000; local host starts at 1,000; daily local reward +100. Initial online stake 0–1,000; subsequent doubles cap at 10,000. |
 | Pen unlocks | Ballpoint free, gel 200, fountain 300 local coins. Guest players default to ballpoint; online player can select their equipped class. Server does not enforce purchases because these prototype unlocks are local. |
 | Draws | Tied winners share integer coins; spare coins go in stable seat order. No-survivor pen outcome refunds all entrants. |
@@ -41,3 +41,5 @@ The source brief is preserved in `BRIEF.txt`. These decisions remove ambiguities
 ## Visual and audio treatment
 
 The browser hub uses procedural notebook/wood illustrations, ruled pages, graph paper, folded chit cards, colored ink, and a stationery locker. Sound is synthesized, and supported devices receive short haptic pulses. Authored ASMR recordings, chit rigidbody/shuffle animation, pen motion interpolation, paper themes, stickers, and a polished native Unity presentation remain production-art work. The current game rules resolve a flick immediately; the UI renders its permanent trail and result.
+
+Dots controls in the web edition: drag between adjacent dots, tap two adjacent dots, or tap along the whole edge. Diagonal, duplicate, cancelled, and stale-turn gestures never spend a turn. Arrow keys move a selected dot; Shift+Arrow draws a neighboring edge.

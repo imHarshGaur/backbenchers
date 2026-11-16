@@ -38,3 +38,11 @@
 ## Hosted launch fix
 
 The GitHub raw-file link serves source/download content and is not a hosted game. A private Sites deployment now serves `dist/index.html` at https://backbencher-play.biblespath9.chatgpt.site. This edition hides unsupported online-room controls and preserves bots and pass-and-play. The multiplayer server remains separate. Deployment was confirmed by Sites; hosted browser QA was unavailable because the managed desktop tool was not exposed. All 25 Node checks passed after the change.
+
+## Launch button visibility fix
+
+The font-import removal regex stopped at the first semicolon inside the Google Fonts URL. The remaining URL fragment corrupted the first CSS rule, so theme variables were undefined and the launch button lost its background. The build now removes the complete import line; the action reads **Launch game** and has explicit high-contrast colors. Both generated files pass CSS parsing and token/style regression checks; the Node suite now has 27 passing tests. The browser smoke suite also checks the built button color and root variable when run in CI. Hosted browser QA remains unavailable in this workspace.
+
+## Gameplay input repair
+
+45 Node checks now pass, including 18 new per-game UI interaction checks against the generated hosted artifact. These use a simulated DOM, pointer-handler events at desktop/mobile coordinate scales, and controlled clocks; they are not a substitute for a real-device playthrough. The Chromium CI suite now includes a real dot-to-dot drag, a completed box, optional timing, chit swap, and the phone-sized hosted artifact. See GAMEPLAY-AUDIT.md for exact fixes and limits.
