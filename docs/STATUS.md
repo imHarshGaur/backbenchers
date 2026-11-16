@@ -38,3 +38,23 @@
 ## Hosted launch fix
 
 The GitHub raw-file link serves source/download content and is not a hosted game. A private Sites deployment now serves `dist/index.html` at https://backbencher-play.biblespath9.chatgpt.site. This edition hides unsupported online-room controls and preserves bots and pass-and-play. The multiplayer server remains separate. Deployment was confirmed by Sites; hosted browser QA was unavailable because the managed desktop tool was not exposed. All 25 Node checks passed after the change.
+
+## Launch button visibility fix
+
+The font-import removal regex stopped at the first semicolon inside the Google Fonts URL. The remaining URL fragment corrupted the first CSS rule, so theme variables were undefined and the launch button lost its background. The build now removes the complete import line; the action reads **Launch game** and has explicit high-contrast colors. Both generated files pass CSS parsing and token/style regression checks; the Node suite now has 27 passing tests. The browser smoke suite also checks the built button color and root variable when run in CI. Hosted browser QA remains unavailable in this workspace.
+
+## Gameplay input repair
+
+45 Node checks now pass, including 18 new per-game UI interaction checks against the generated hosted artifact. These use a simulated DOM, pointer-handler events at desktop/mobile coordinate scales, and controlled clocks; they are not a substitute for a real-device playthrough. The Chromium CI suite now includes a real dot-to-dot drag, a completed box, optional timing, chit swap, and the phone-sized hosted artifact. See GAMEPLAY-AUDIT.md for exact fixes and limits.
+
+## Pen Rocket power meter
+
+The web edition now has a live segmented 0–100% power bar with numeric and accessible readings, charge-level colors, a maximum-power cue, and local previous-shot comparison. Its percentage uses the effective pull strength used by the physics, including the minimum valid pull and maximum cap. Cancellation, pause, timeout, and a new turn clear the gauge. All 50 Node checks pass; Chromium CI also checks live charging, reset, and last-shot feedback. This is a web UI feature; Unity presentation is unchanged.
+
+## Animated notebook graphics
+
+Pen Rocket now replays each resolved shot across the paper with a rotating pen, progressively drawn ink, contact bursts, portal gaps, and a settling margin. Next-player input and local bot/timed clocks wait for the flight to finish. Pause, backgrounding, quit, rematch, and reduced-motion preferences are covered. Rules still resolve once; animation reads detached snapshots and cannot change scoring. Online snapshots remain server-authoritative and supersede older animations.
+
+The web renderer adds shaded class-specific pens, high-density Canvas output, textured notebook paper, shaded hazards, an aiming target, and clearer player labels. Board frames, power meters, roster cards, graph paper, and folded chits share the updated desk styling. Grabbing the barrel measures power from the actual grab point and cannot fire from a stationary tap.
+
+59 Node checks pass, including nine animation/input regressions. Chromium CI exercises intermediate pen positions, landing/unlocking, actual pointer input, mobile layout, and offline packaging. Screenshots are retained as CI artifacts. A direct native Canvas rendering was inspected locally; this environment has no supported browser preview. Unity presentation remains unchanged.

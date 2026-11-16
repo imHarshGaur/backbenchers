@@ -11,7 +11,7 @@ const ALPHABET='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 function createServer({now=Date.now}={}) {
   const rooms=new Map(),sessions=new Map();
   const root=path.resolve(__dirname,'..');
-  const files={'/':'web/index.html','/app.js':'web/app.js','/style.css':'web/style.css','/core.js':'shared/core.js','/play.html':'dist/backbencher.html'};
+  const files={'/':'web/index.html','/app.js':'web/app.js','/input.js':'web/input.js','/pen-renderer.js':'web/pen-renderer.js','/site.html':'dist/index.html','/style.css':'web/style.css','/core.js':'shared/core.js','/play.html':'dist/backbencher.html'};
   const server=http.createServer((req,res)=>{
     const p=new URL(req.url,'http://localhost').pathname;
     if(p==='/health'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:true,rooms:rooms.size}));return;}
@@ -115,7 +115,7 @@ function createServer({now=Date.now}={}) {
       const s=room.game;
       if(s&&['playing','guess','reveal'].includes(s.phase)){
         const id=G.actor(s),p=room.players.find(p=>p.id===id),bot=p&&(p.bot||!p.connected);
-        if((bot&&now()>room.updated+900)||now()>=room.deadline){try{play(room,id,G.botAction(s,rng));}catch(e){console.error('Room timer failure:',room.code,e.message);}}
+        if((bot&&now()>room.updated+(s.kind==='rmcs'&&s.phase==='guess'?8000:1400))||now()>=room.deadline){try{play(room,id,G.botAction(s,rng));}catch(e){console.error('Room timer failure:',room.code,e.message);}}
       }
       if(!room.players.some(p=>!p.bot&&p.connected)&&now()-room.updated>30*60*1000){rooms.delete(room.code);for(const p of room.players){const session=sessions.get(p.token);if(session){session.room=null;session.player=null;}}}
     }

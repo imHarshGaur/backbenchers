@@ -34,11 +34,13 @@
       hazards:[{kind:'coffee',x:300,y:255,r:38},{kind:'portal',x:155,y:380,r:18},{kind:'portal',x:445,y:200,r:18},{kind:'shield',x:300,y:410,r:18,used:false}],
       pens:ps.map((p,i)=>{const a=2*Math.PI*i/n-Math.PI/2; const x=300+205*Math.cos(a),y=300+205*Math.sin(a);const type=['ballpoint','gel','fountain'].includes(classes[i])?classes[i]:'ballpoint';return {id:p.id,x,y,type,alive:true,lives:(n>=4?2:1)+(type==='fountain'?1:0),shield:false,segments:[{a:{x:x-12,y:y+18},b:{x,y}}]};})};
   }
+  // This is the effective pull used by the shot and its visual power gauge.
+  function penPower(dx,dy) {const magnitude=Math.hypot(dx,dy);return Number.isFinite(dx)&&Number.isFinite(dy)&&magnitude>=4?clamp(magnitude,15,140):0;}
   function flick(s,id,dx,dy) {
     assert(s.phase==='playing'&&s.players[s.turn].id===id,'Wait for your turn.');
     assert(Number.isFinite(dx)&&Number.isFinite(dy),'Invalid flick.');
     const p=s.pens[s.turn],power=Math.hypot(dx,dy); assert(power>=4,'Pull back a little farther.');
-    let distance=clamp(power,15,140)*(p.type==='gel'?3.2:p.type==='fountain'?1.85:2.65);
+    let distance=penPower(dx,dy)*(p.type==='gel'?3.2:p.type==='fountain'?1.85:2.65);
     let angle=Math.atan2(dy,dx),teleported=false,coffee=false; const hit=new Set(),path=[];
     const steps=Math.ceil(distance/5),stride=distance/steps;
     for(let i=0;i<steps&&p.alive;i++) {
@@ -170,5 +172,5 @@
     recipients.forEach((id,i)=>wallets[id]+=each+(i<extra?1:0));escrow.settled=true;
   }
   function create(kind,names,options={}) {if(kind==='pen')return newPen(names,options.classes);if(kind==='dots')return newDots(names,options.rng);if(kind==='rmcs')return newRMCS(names,options.rounds||5,options.rng);throw new Error('Unknown game.');}
-  return {COLORS,ROLES,clamp,shuffle,players,intersection,newPen,flick,newDots,boxEdges,allEdges,drawEdge,newRMCS,reveal,swap,bet,guess,nextRound,actor,botAction,action,publicState,collect,settle,create};
+  return {COLORS,ROLES,clamp,shuffle,players,intersection,newPen,penPower,flick,newDots,boxEdges,allEdges,drawEdge,newRMCS,reveal,swap,bet,guess,nextRound,actor,botAction,action,publicState,collect,settle,create};
 });

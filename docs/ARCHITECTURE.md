@@ -37,6 +37,7 @@ backbenchers/
 ├── web/
 │   ├── index.html                 accessible shell and privacy curtain
 │   ├── style.css                  responsive stationery visual system
+│   ├── input.js                   dot/edge coordinate and gesture helpers
 │   └── app.js                     hub, setup, lobby, Canvas, locker, audio, input
 ├── dist/backbencher.html           checked-in, standalone offline game
 ├── scripts/build.js                reproducible single-file bundler
@@ -88,10 +89,10 @@ stateDiagram-v2
     Guess --> Finished: final round resolves
 ```
 
-- Dots turns are 6 seconds, RMCS guesses 15 seconds. Pen turns and online private reveals get 30 seconds.
+- Web local Dots/Pen offer default Relaxed play or explicit Timed mode. Timed/online Dots turns are 6 seconds; RMCS guesses 15 seconds; timed Pen and online private reveals get 30 seconds.
 - An offline privacy curtain pauses the local clock; a server deadline never pauses for a client overlay.
 - Each ordinary move or phase transition resets its clock. Side bets and swaps do not extend a deadline.
-- Bots act after roughly 900 ms online or 1,050 ms locally. Missing players use the same bot policy.
+- Bots act after roughly 1,400 ms; a bot Mantri waits 8 seconds so human bluff/bet controls remain usable. Missing players use the same bot policy.
 - A completed box earns a new timed turn. A single edge can close multiple boxes.
 
 ## Authority and privacy
