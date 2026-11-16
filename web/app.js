@@ -27,7 +27,8 @@ let screen = "home",
   hoverEdge = null,
   paused = false,
   clockPausedAt = null,
-  privateContext = null;
+  privateContext = null,
+  lastPenShot = null;
 let settings = {
     count: 2,
     bots: 1,
@@ -123,6 +124,7 @@ const ART = {
 };
 function home() {
   screen = "home";
+  lastPenShot = null;
   clearBoardInput();
   paused = false;
   clockPausedAt = null;
@@ -291,6 +293,7 @@ function startLocal(double = false) {
     rounds: settings.rounds,
   });
   settled = false;
+  lastPenShot = null;
   paused = false;
   closeCurtain();
   clearBoardInput();
@@ -303,6 +306,7 @@ function clearBoardInput() {
   selectedDot = null;
   dotGesture = null;
   hoverEdge = null;
+  updatePowerMeter();
 }
 function resetClock() {
   clearBoardInput();
@@ -458,7 +462,14 @@ function act(a, id) {
       send({ type: "action", version: room.version, action: a });
       return;
     }
-    G.action(game, id || G.actor(game), a);
+    const actor = id || G.actor(game);
+    const shotName = game.players.find((p) => p.id === actor)?.name;
+    G.action(game, actor, a);
+    if (game.kind === "pen" && a.type === "flick")
+      lastPenShot = {
+        name: shotName,
+        percent: shotPercent(a.dx, a.dy),
+      };
     fx();
     if (!["swap", "bet"].includes(a.type)) resetClock();
     renderGame();
@@ -507,7 +518,7 @@ function renderGame() {
             : "The desk wins. Stakes refunded."
         }</h2><p>${esc(game.last)}</p>${online ? "" : `<p>Your wallet: ${profile.coins} ✦ ${profile.streak >= 3 ? "· Backbench Legend ★" : ""}</p>`}<div class="button-row" style="justify-content:center">${online ? button("again-ready", room.players.find((p) => p.id === you).ready ? "Ready ✓" : "Ready for rematch") + (room.host === you ? button("again-start", "Start rematch") + button("again-double", "Double stakes", "secondary") : "") + button("leave-finished", "Leave room", "secondary") : button("rematch", "Play again →") + button("double", "Double stakes →", "secondary")}</div></div>`
       : ""
-  }<div class="play-layout"><div class="board-wrap"><div class="board-status" aria-live="polite"><strong>${done ? "Match finished" : roundDone ? "Round complete" : `${isBot(actor) ? "Bot turn" : "Your turn"}: ${esc(current?.name || "Benchmate")}`}</strong><span id="board-timer">${!online && game.kind !== "rmcs" && !settings.timed ? "Relaxed · no timer" : ""}</span></div><p class="board-instruction">${game.kind === "dots" ? "Drag between two adjacent dots, tap two dots, or tap anywhere along their connecting line." : game.kind === "pen" ? "Hold your highlighted pen, pull back, then release. The dotted path shows your shot." : "Only Mantri chooses a suspect. Open your own chit privately to bluff or bet."}</p>${game.kind === "rmcs" ? `<div class="chit-table">${game.players.map((p, i) => `<button class="chit ${rolePublic(i) ? "role-" + game.roles[i].toLowerCase() : ""}" data-chit="${p.id}" ${game.phase !== "guess" || !myTurn || ["Raja", "Mantri"].includes(game.roles[i]) ? "disabled" : ""}><small>${esc(p.name)}</small><strong>${rolePublic(i) ? game.roles[i] : "✉"}</strong>${game.roundScores ? `<small>${game.roundScores[i] >= 0 ? "+" : ""}${game.roundScores[i]} PTS</small>` : ""}</button>`).join("")}</div>` : '<canvas id="board" width="600" height="600" tabindex="0" aria-label="Game board. Use pointer or touch to play."></canvas>'}<div class="board-caption">${esc(game.last)}</div></div><aside class="side-panel"><div class="turn-card"><span class="eyebrow">${done ? "MATCH FINISHED" : roundDone ? "ROUND FINISHED" : myTurn ? "YOUR TURN" : isBot(actor) ? "BOT THINKING" : "AT THE BENCH"}</span><h3>${done ? "Well played." : roundDone ? "Fold & shuffle." : esc(current?.name || "Benchmate")}</h3><span class="timer" id="timer"></span>${game.kind === "rmcs" && !done && !roundDone ? `<div class="button-row">${button("private", game.phase === "reveal" ? "Open private chit" : "Private chit / bluff", "secondary")}</div>` : ""}${roundDone ? button("next-round", "Next round →") : ""}</div><div class="roster">${game.players.map((p, i) => `<div class="player-row ${p.id === actor ? "active" : ""}"><span><i class="color-dot" style="background:${p.color}"></i>${esc(p.name)}${online && p.id === you ? " · YOU" : ""}${isBot(p.id) ? " · BOT" : ""}</span><span>${game.kind === "pen" ? (game.pens[i].alive ? `${game.pens[i].shield ? "◈ " : ""}${"♥".repeat(game.pens[i].lives)}` : "OUT") : `${p.score} pts`}</span></div>`).join("")}</div><div class="rules">${game.kind === "pen" ? "<strong>Pull back. Release. Slice.</strong><br>Drag back from your pen to aim. Cross a rival ink trail to cut a life. Every 3 turns, the red margin shrinks.<br>◯ Coffee deflects · ◌ Holes teleport<br>◇ Whitener shields one hit." : game.kind === "dots" ? `<strong>Connect. Close. Claim.</strong><br>Tap between adjacent dots. Finish a box to go again. ${online || settings.timed ? "Blitz: 6 seconds per turn; timeout plays a line." : "Relaxed: take your time. Your lines are never drawn automatically."}<br>★ Gold = 2 points · ✳ Bomb clears nearby unclaimed lines.` : "<strong>Mera Mantri Kaun?</strong><br>Mantri has 15 seconds to tap the Chor. A wrong guess gives Chor 800 points.<br>Chor can swap once per match. Private Chalk Bets add or subtract 50 score points."}</div></aside></div>`;
+  }<div class="play-layout"><div class="board-wrap"><div class="board-status" aria-live="polite"><strong>${done ? "Match finished" : roundDone ? "Round complete" : `${isBot(actor) ? "Bot turn" : "Your turn"}: ${esc(current?.name || "Benchmate")}`}</strong><span id="board-timer">${!online && game.kind !== "rmcs" && !settings.timed ? "Relaxed · no timer" : ""}</span></div><p class="board-instruction">${game.kind === "dots" ? "Drag between two adjacent dots, tap two dots, or tap anywhere along their connecting line." : game.kind === "pen" ? "Hold your highlighted pen, pull back, then release. Watch the power bar fill as you pull back. The dotted path shows your shot." : "Only Mantri chooses a suspect. Open your own chit privately to bluff or bet."}</p>${game.kind === "pen" ? powerMeterHTML() : ""}${game.kind === "rmcs" ? `<div class="chit-table">${game.players.map((p, i) => `<button class="chit ${rolePublic(i) ? "role-" + game.roles[i].toLowerCase() : ""}" data-chit="${p.id}" ${game.phase !== "guess" || !myTurn || ["Raja", "Mantri"].includes(game.roles[i]) ? "disabled" : ""}><small>${esc(p.name)}</small><strong>${rolePublic(i) ? game.roles[i] : "✉"}</strong>${game.roundScores ? `<small>${game.roundScores[i] >= 0 ? "+" : ""}${game.roundScores[i]} PTS</small>` : ""}</button>`).join("")}</div>` : '<canvas id="board" width="600" height="600" tabindex="0" aria-label="Game board. Use pointer or touch to play."></canvas>'}<div class="board-caption">${esc(game.last)}</div></div><aside class="side-panel"><div class="turn-card"><span class="eyebrow">${done ? "MATCH FINISHED" : roundDone ? "ROUND FINISHED" : myTurn ? "YOUR TURN" : isBot(actor) ? "BOT THINKING" : "AT THE BENCH"}</span><h3>${done ? "Well played." : roundDone ? "Fold & shuffle." : esc(current?.name || "Benchmate")}</h3><span class="timer" id="timer"></span>${game.kind === "rmcs" && !done && !roundDone ? `<div class="button-row">${button("private", game.phase === "reveal" ? "Open private chit" : "Private chit / bluff", "secondary")}</div>` : ""}${roundDone ? button("next-round", "Next round →") : ""}</div><div class="roster">${game.players.map((p, i) => `<div class="player-row ${p.id === actor ? "active" : ""}"><span><i class="color-dot" style="background:${p.color}"></i>${esc(p.name)}${online && p.id === you ? " · YOU" : ""}${isBot(p.id) ? " · BOT" : ""}</span><span>${game.kind === "pen" ? (game.pens[i].alive ? `${game.pens[i].shield ? "◈ " : ""}${"♥".repeat(game.pens[i].lives)}` : "OUT") : `${p.score} pts`}</span></div>`).join("")}</div><div class="rules">${game.kind === "pen" ? "<strong>Pull back. Release. Slice.</strong><br>Drag back from your pen to aim. Cross a rival ink trail to cut a life. Every 3 turns, the red margin shrinks.<br>◯ Coffee deflects · ◌ Holes teleport<br>◇ Whitener shields one hit." : game.kind === "dots" ? `<strong>Connect. Close. Claim.</strong><br>Tap between adjacent dots. Finish a box to go again. ${online || settings.timed ? "Blitz: 6 seconds per turn; timeout plays a line." : "Relaxed: take your time. Your lines are never drawn automatically."}<br>★ Gold = 2 points · ✳ Bomb clears nearby unclaimed lines.` : "<strong>Mera Mantri Kaun?</strong><br>Mantri has 15 seconds to tap the Chor. A wrong guess gives Chor 800 points.<br>Chor can swap once per match. Private Chalk Bets add or subtract 50 score points."}</div></aside></div>`;
   bind("pause-game", pauseGame);
   bind("back-play", () => {
     if (online) return toast("Finish the match, then leave from the lobby.");
@@ -705,6 +716,7 @@ function wireCanvas() {
         pointerId: e.pointerId,
         actor: G.actor(game),
       };
+      drawBoard();
     } else {
       const dot = I.dotAt(game.size, p, dotRadius());
       dotGesture = {
@@ -819,9 +831,59 @@ function wireCanvas() {
     }
   };
 }
+function shotPercent(dx, dy) {
+  const pull = G.penPower(dx, dy);
+  return pull >= 140 ? 100 : Math.min(99, Math.round((pull / 140) * 100));
+}
+function powerMeterHTML() {
+  return `<section class="power-panel" aria-label="Pen Rocket power"><div class="power-heading"><span>ROCKET POWER</span><strong id="power-value">0%</strong></div><div id="power-meter" class="power-track" role="meter" aria-label="Flick power" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Pull back to charge"><span id="power-fill" class="power-fill"></span><span class="power-ticks" aria-hidden="true"></span></div><div class="power-scale" aria-hidden="true"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div><div class="power-details"><span id="power-label">Pull back to charge</span><span id="last-shot">${lastPenShot ? `${esc(lastPenShot.name)} fired ${lastPenShot.percent}%` : "More power. Longer slide."}</span></div></section>`;
+}
+function updatePowerMeter() {
+  const meter = $("#power-meter");
+  if (!meter) return;
+  const pull = drag
+    ? G.penPower(drag.start.x - drag.end.x, drag.start.y - drag.end.y)
+    : 0;
+  const percent = shotPercent(pull, 0);
+  const level =
+    percent === 100
+      ? "max"
+      : percent >= 75
+        ? "high"
+        : percent >= 40
+          ? "medium"
+          : percent > 0
+            ? "low"
+            : "idle";
+  const label =
+    game?.phase === "finished"
+      ? "Match finished"
+      : paused
+        ? "Paused"
+        : !drag
+          ? isBot(G.actor(game))
+            ? "Bot lining up a shot"
+            : "Pull back to charge"
+          : percent === 0
+            ? "Pull back a little farther"
+            : percent === 100
+              ? "MAX POWER · release to fire"
+              : percent >= 75
+                ? "Heavy shot · release to fire"
+                : percent >= 40
+                  ? "Strong shot · release to fire"
+                  : "Light shot · release to fire";
+  meter.dataset.level = level;
+  meter.setAttribute("aria-valuenow", String(percent));
+  meter.setAttribute("aria-valuetext", `${percent}% · ${label}`);
+  $("#power-value").textContent = `${percent}%`;
+  $("#power-fill").style.width = `${percent}%`;
+  $("#power-label").textContent = label;
+}
 function drawBoard() {
   const canvas = $("#board");
   if (!canvas || !game) return;
+  updatePowerMeter();
   const c = canvas.getContext("2d");
   c.clearRect(0, 0, 600, 600);
   c.fillStyle = "#fffcf1";
@@ -920,14 +982,6 @@ function drawBoard() {
         c.setLineDash([]);
       }
       line(drag.start, drag.end, "#c09d68", 2);
-      c.font = "16px sans-serif";
-      c.fillStyle = "#263c36";
-      c.textAlign = "left";
-      c.fillText(
-        `Power ${Math.min(100, Math.round((power / 140) * 100))}%`,
-        20,
-        580,
-      );
     }
   } else {
     const n = game.size,

@@ -18,7 +18,7 @@ const fs = require("node:fs");
     await p.click("#back-play");
     await p.click("#quit-game");
   }
-  async function dragBoard(p, a, b) {
+  async function dragBoard(p, a, b, during) {
     const box = await p.locator("#board").boundingBox();
     await p.mouse.move(
       box.x + (a.x * box.width) / 600,
@@ -30,6 +30,7 @@ const fs = require("node:fs");
       box.y + (b.y * box.height) / 600,
       { steps: 8 },
     );
+    if (during) await during();
     await p.mouse.up();
   }
   async function tapBoard(p, x, y) {
@@ -65,7 +66,19 @@ const fs = require("node:fs");
   await page.click("#start-local");
   await tapBoard(page, 300, 95);
   assert.equal(await page.evaluate(() => game.turns), 0);
-  await dragBoard(page, { x: 300, y: 95 }, { x: 300, y: 50 });
+  await dragBoard(page, { x: 300, y: 95 }, { x: 300, y: 50 }, async () => {
+    assert.equal(await page.locator("#power-value").textContent(), "32%");
+    assert.equal(
+      await page.locator("#power-meter").getAttribute("aria-valuenow"),
+      "32",
+    );
+    assert.equal(
+      await page.locator("#power-fill").evaluate((el) => el.style.width),
+      "32%",
+    );
+  });
+  assert.equal(await page.locator("#power-value").textContent(), "0%");
+  assert.match(await page.locator("#last-shot").textContent(), /fired 32%/);
   assert.equal(await page.evaluate(() => game.turns), 1);
   await leave(page);
   // Chits: human-only private handoffs and a legal Mantri accusation.

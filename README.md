@@ -32,7 +32,7 @@ The native prototype uses a programmatic IMGUI presentation so its controllers a
 
 ## What works
 
-- **Pen Rocket:** drag-to-flick, permanent ink segments, inclusive line intersection, life elimination, three pen classes, shrinking margins, coffee deflection, teleport holes, and one-hit whitener shields.
+- **Pen Rocket:** a live 0–100% power bar with full-charge cue and local last-shot comparison, drag-to-flick, permanent ink segments, inclusive line intersection, life elimination, three pen classes, shrinking margins, coffee deflection, teleport holes, and one-hit whitener shields.
 - **Chaukadi Blitz:** 4×4 or 6×6 dot boards, extra turns, optional six-second Blitz auto-moves, double-value stars, and a one-use bomb that clears neighboring unclaimed edges.
 - **RMCS:** four, five, or six players, privacy curtains, five/seven-round scoring offline, fifteen-second Mantri guesses, a once-per-match Chor swap, and ±50-point Chalk Bets. Online rooms currently use five rounds.
 - **Rooms:** four-character codes, ready checks, host start, bot backfill, turn validation, monotonic state versions, private role projections, session resume, and disconnected-player bot turns.

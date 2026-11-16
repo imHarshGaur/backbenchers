@@ -46,3 +46,7 @@ The font-import removal regex stopped at the first semicolon inside the Google F
 ## Gameplay input repair
 
 45 Node checks now pass, including 18 new per-game UI interaction checks against the generated hosted artifact. These use a simulated DOM, pointer-handler events at desktop/mobile coordinate scales, and controlled clocks; they are not a substitute for a real-device playthrough. The Chromium CI suite now includes a real dot-to-dot drag, a completed box, optional timing, chit swap, and the phone-sized hosted artifact. See GAMEPLAY-AUDIT.md for exact fixes and limits.
+
+## Pen Rocket power meter
+
+The web edition now has a live segmented 0–100% power bar with numeric and accessible readings, charge-level colors, a maximum-power cue, and local previous-shot comparison. Its percentage uses the effective pull strength used by the physics, including the minimum valid pull and maximum cap. Cancellation, pause, timeout, and a new turn clear the gauge. All 50 Node checks pass; Chromium CI also checks live charging, reset, and last-shot feedback. This is a web UI feature; Unity presentation is unchanged.
