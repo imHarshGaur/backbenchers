@@ -20,7 +20,7 @@ The reported primary failure was Dots & Boxes refusing a line drawn within the s
 
 ## Verification
 
-- 45 local Node tests pass: 18 UI state/input flows, 2 packaging checks, plus rules, schema and live socket checks.
+- 59 local Node tests pass, including animation timing, growing ink, portal gaps, landing/input locks, pause/resume, bot pacing, reduced motion, match settlement, and barrel grabs alongside existing per-game, packaging, rules, schema and socket checks.
 - UI checks load the exact generated `dist/index.html`; they run its scripts and handlers in JSDOM. Canvas painting is stubbed, so these establish state transitions and input geometry, not visual quality or physical-device event delivery.
 - Chromium CI checks cover actual pointer delivery, the hosted bundle at phone width, box completion, pen release, chit swap, and launch colors. The managed workspace did not expose its supported desktop tool, so no new local browser playthrough is claimed.
 - Pure C# rules were unchanged. Unity's development UI was not reworked or retested in the editor during this web gameplay repair.

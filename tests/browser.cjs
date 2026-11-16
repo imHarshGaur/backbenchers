@@ -80,6 +80,19 @@ const fs = require("node:fs");
   assert.equal(await page.locator("#power-value").textContent(), "0%");
   assert.match(await page.locator("#last-shot").textContent(), /fired 32%/);
   assert.equal(await page.evaluate(() => game.turns), 1);
+  assert(await page.evaluate(() => penMotion !== null));
+  await page.waitForTimeout(180);
+  assert(
+    await page.evaluate(
+      () =>
+        penFrame.state.pens[0].y > 95 &&
+        penFrame.state.pens[0].y < game.pens[0].y,
+    ),
+  );
+  await page.screenshot({ path: "work/pen-in-flight.png", fullPage: true });
+  await page.waitForFunction(() => penMotion === null);
+  assert(await page.evaluate(() => canPlay()));
+  await page.screenshot({ path: "work/pen-board.png", fullPage: true });
   await leave(page);
   // Chits: human-only private handoffs and a legal Mantri accusation.
   await page.click('[data-game="rmcs"]');

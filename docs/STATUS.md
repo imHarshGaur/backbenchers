@@ -50,3 +50,11 @@ The font-import removal regex stopped at the first semicolon inside the Google F
 ## Pen Rocket power meter
 
 The web edition now has a live segmented 0–100% power bar with numeric and accessible readings, charge-level colors, a maximum-power cue, and local previous-shot comparison. Its percentage uses the effective pull strength used by the physics, including the minimum valid pull and maximum cap. Cancellation, pause, timeout, and a new turn clear the gauge. All 50 Node checks pass; Chromium CI also checks live charging, reset, and last-shot feedback. This is a web UI feature; Unity presentation is unchanged.
+
+## Animated notebook graphics
+
+Pen Rocket now replays each resolved shot across the paper with a rotating pen, progressively drawn ink, contact bursts, portal gaps, and a settling margin. Next-player input and local bot/timed clocks wait for the flight to finish. Pause, backgrounding, quit, rematch, and reduced-motion preferences are covered. Rules still resolve once; animation reads detached snapshots and cannot change scoring. Online snapshots remain server-authoritative and supersede older animations.
+
+The web renderer adds shaded class-specific pens, high-density Canvas output, textured notebook paper, shaded hazards, an aiming target, and clearer player labels. Board frames, power meters, roster cards, graph paper, and folded chits share the updated desk styling. Grabbing the barrel measures power from the actual grab point and cannot fire from a stationary tap.
+
+59 Node checks pass, including nine animation/input regressions. Chromium CI exercises intermediate pen positions, landing/unlocking, actual pointer input, mobile layout, and offline packaging. Screenshots are retained as CI artifacts. A direct native Canvas rendering was inspected locally; this environment has no supported browser preview. Unity presentation remains unchanged.

@@ -248,6 +248,7 @@ test("Pen: finish a match using drag controls and start a clean rematch", (t) =>
       p = s.pens[s.turn],
       a = G.botAction(s);
     u.drag({ x: p.x, y: p.y }, { x: p.x - a.dx, y: p.y - a.dy });
+    u.clock.tick(1800);
   }
   assert.equal(u.state().phase, "finished");
   assert.equal(u.eval("Object.values(wallets).reduce((a,b)=>a+b)"), 4000);

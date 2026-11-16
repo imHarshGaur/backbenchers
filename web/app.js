@@ -28,7 +28,10 @@ let screen = "home",
   paused = false,
   clockPausedAt = null,
   privateContext = null,
-  lastPenShot = null;
+  lastPenShot = null,
+  penMotion = null,
+  penFrame = null,
+  penRAF = null;
 let settings = {
     count: 2,
     bots: 1,
@@ -123,6 +126,7 @@ const ART = {
   rmcs: `<svg viewBox="0 0 340 190" aria-hidden="true"><rect width="340" height="190" fill="#dfc9a6"/><g stroke="#c0a17b" opacity=".35"><path d="M0 24Q100 13 340 28M0 63Q180 40 340 59M0 113Q150 130 340 112M0 158Q180 140 340 163" fill="none"/><path d="M50 0L40 190M280 0L292 190"/></g><g transform="translate(70 47) rotate(-13 60 50)"><rect x="3" y="5" width="95" height="87" fill="#765a3630"/><rect width="95" height="87" fill="#f4eedc"/><path d="M0 0L48 44L95 0M48 44V87" fill="none" stroke="#ded3b9"/><text x="20" y="66" font-family="cursive" font-size="23" fill="#8f8063">chor?</text></g><g transform="translate(178 35) rotate(13 50 60)"><rect x="3" y="5" width="99" height="110" fill="#765a3630"/><rect width="99" height="110" fill="#f6eed7"/><path d="M0 50H99" stroke="#d9c9a8"/><path d="M32 28L25 11L42 20L51 5L60 20L76 11L70 28Z" fill="#ba9141"/><text x="25" y="77" font-family="cursive" font-size="25" fill="#8c6c39">Raja</text><text x="31" y="96" font-family="sans-serif" font-size="8" letter-spacing="2" fill="#ac9975">1000 PTS</text></g></svg>`,
 };
 function home() {
+  stopPenMotion();
   screen = "home";
   lastPenShot = null;
   clearBoardInput();
@@ -334,7 +338,7 @@ function syncClockPause() {
   }
 }
 function pauseGame() {
-  if (online || !game || game.phase === "finished") return;
+  if (online || !game || (game.phase === "finished" && !penMotion)) return;
   paused = true;
   clearBoardInput();
   syncClockPause();
@@ -397,6 +401,8 @@ function connect(after) {
       online = true;
       room = msg.room;
       you = msg.you;
+      const previous = game;
+      stopPenMotion();
       clearBoardInput();
       game = msg.game;
       if (curtainOpen) closeCurtain();
@@ -404,7 +410,7 @@ function connect(after) {
       kind = room.kind;
       if (game) {
         screen = "play";
-        renderGame();
+        if (!beginPenMotion(previous)) renderGame();
       } else {
         screen = "lobby";
         lobby();
@@ -455,8 +461,62 @@ function lobby() {
       .catch(() => toast(text));
   });
 }
+function stopPenMotion() {
+  if (penRAF !== null) cancelAnimationFrame(penRAF);
+  penRAF = null;
+  penMotion = null;
+  penFrame = null;
+}
+function flightHUD() {
+  if (!penMotion) return;
+  const name = penMotion.before.players[penMotion.index].name;
+  if ($(".board-status strong"))
+    $(".board-status strong").textContent = `${name} · pen in flight`;
+  if ($("#board-timer")) $("#board-timer").textContent = "Follow the ink →";
+  if ($("#timer")) $("#timer").textContent = "Next turn after the pen stops";
+  if ($(".turn-card .eyebrow"))
+    $(".turn-card .eyebrow").textContent = "PEN IN FLIGHT";
+  if ($("#last-shot") && lastPenShot)
+    $("#last-shot").textContent =
+      `${lastPenShot.name} fired ${lastPenShot.percent}%`;
+  if ($("#board")) $("#board").dataset.motion = "flying";
+  updatePowerMeter();
+}
+function beginPenMotion(before) {
+  if (!$("#board") || !game) return false;
+  const motion = PenRenderer.motion(
+    before,
+    game,
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
+  );
+  if (!motion) return false;
+  stopPenMotion();
+  clearBoardInput();
+  penMotion = { ...motion, elapsed: 0, lastTick: Date.now() };
+  penFrame = PenRenderer.sample(penMotion, 0);
+  flightHUD();
+  drawBoard();
+  function frame() {
+    if (!penMotion) return;
+    const now = Date.now(),
+      delta = now - penMotion.lastTick;
+    penMotion.lastTick = now;
+    if (!paused && !document.hidden) penMotion.elapsed += delta;
+    penFrame = PenRenderer.sample(penMotion, penMotion.elapsed);
+    if (penFrame.done) {
+      stopPenMotion();
+      if (!online) resetClock();
+      renderGame();
+      return;
+    }
+    drawBoard();
+    penRAF = requestAnimationFrame(frame);
+  }
+  penRAF = requestAnimationFrame(frame);
+  return true;
+}
 function act(a, id) {
-  if (!game) return;
+  if (!game || penMotion) return;
   try {
     if (online) {
       send({ type: "action", version: room.version, action: a });
@@ -464,6 +524,8 @@ function act(a, id) {
     }
     const actor = id || G.actor(game);
     const shotName = game.players.find((p) => p.id === actor)?.name;
+    const before =
+      game.kind === "pen" ? JSON.parse(JSON.stringify(game)) : null;
     G.action(game, actor, a);
     if (game.kind === "pen" && a.type === "flick")
       lastPenShot = {
@@ -471,6 +533,10 @@ function act(a, id) {
         percent: shotPercent(a.dx, a.dy),
       };
     fx();
+    if (beginPenMotion(before)) {
+      finishLocal();
+      return;
+    }
     if (!["swap", "bet"].includes(a.type)) resetClock();
     renderGame();
   } catch (e) {
@@ -491,6 +557,11 @@ function finishLocal() {
 }
 function renderGame() {
   if (!game) return;
+  if (penMotion) {
+    flightHUD();
+    drawBoard();
+    return;
+  }
   finishLocal();
   const actor =
       online && game.kind === "rmcs"
@@ -522,7 +593,7 @@ function renderGame() {
   bind("pause-game", pauseGame);
   bind("back-play", () => {
     if (online) return toast("Finish the match, then leave from the lobby.");
-    if (game.phase !== "finished") return pauseGame();
+    if (game.phase !== "finished" || penMotion) return pauseGame();
     home();
   });
   bind("again-ready", () => send({ type: "ready", ready: true }));
@@ -669,6 +740,7 @@ function canPlay() {
   return (
     game?.phase === "playing" &&
     !paused &&
+    !penMotion &&
     !curtainOpen &&
     (!online || game.players[game.turn].id === you) &&
     !isBot(game.players[game.turn].id)
@@ -708,11 +780,12 @@ function wireCanvas() {
     canvas.setPointerCapture?.(e.pointerId);
     if (game.kind === "pen") {
       const pen = game.pens[game.turn];
-      if (Math.hypot(p.x - pen.x, p.y - pen.y) > 45)
+      if (Math.hypot(p.x - pen.x, p.y - pen.y) > 55)
         return toast("Start on your highlighted pen, then pull back.");
       drag = {
         start: { x: pen.x, y: pen.y },
-        end: p,
+        end: { x: pen.x, y: pen.y },
+        origin: p,
         pointerId: e.pointerId,
         actor: G.actor(game),
       };
@@ -735,7 +808,10 @@ function wireCanvas() {
     if (!canPlay()) return;
     const p = point(e);
     if (drag && drag.pointerId === e.pointerId) {
-      drag.end = p;
+      drag.end = {
+        x: drag.start.x + p.x - drag.origin.x,
+        y: drag.start.y + p.y - drag.origin.y,
+      };
       drawBoard();
     }
     if (game.kind === "dots") {
@@ -752,7 +828,7 @@ function wireCanvas() {
       const d = drag;
       clearBoardInput();
       if (!canPlay() || d.actor !== G.actor(game)) return drawBoard();
-      act({ type: "flick", dx: d.start.x - p.x, dy: d.start.y - p.y });
+      act({ type: "flick", dx: d.origin.x - p.x, dy: d.origin.y - p.y });
       return;
     }
     if (!dotGesture || dotGesture.pointerId !== e.pointerId) return;
@@ -855,8 +931,9 @@ function updatePowerMeter() {
           : percent > 0
             ? "low"
             : "idle";
-  const label =
-    game?.phase === "finished"
+  const label = penMotion
+    ? "Pen in flight · watch the ink"
+    : game?.phase === "finished"
       ? "Match finished"
       : paused
         ? "Paused"
@@ -884,7 +961,13 @@ function drawBoard() {
   const canvas = $("#board");
   if (!canvas || !game) return;
   updatePowerMeter();
+  const scale = Math.min(2, window.devicePixelRatio || 1);
+  if (canvas.width !== 600 * scale) {
+    canvas.width = 600 * scale;
+    canvas.height = 600 * scale;
+  }
   const c = canvas.getContext("2d");
+  c.setTransform(scale, 0, 0, scale, 0, 0);
   c.clearRect(0, 0, 600, 600);
   c.fillStyle = "#fffcf1";
   c.fillRect(0, 0, 600, 600);
@@ -899,97 +982,29 @@ function drawBoard() {
     c.stroke();
   }
   if (game.kind === "pen") {
-    for (let y = 30; y < 600; y += 30)
-      line({ x: 0, y }, { x: 600, y }, "#c5d3d580", 1);
-    line({ x: 50, y: 0 }, { x: 50, y: 600 }, "#c97c7180", 1);
-    const m = game.margin;
-    c.fillStyle = "#bd624011";
-    c.fillRect(0, 0, 600, m);
-    c.fillRect(0, 600 - m, 600, m);
-    c.fillRect(0, m, m, 600 - 2 * m);
-    c.fillRect(600 - m, m, m, 600 - 2 * m);
-    c.strokeStyle = "#b85b4b";
-    c.lineWidth = 2;
-    c.setLineDash([7, 6]);
-    c.strokeRect(m, m, 600 - 2 * m, 600 - 2 * m);
-    c.setLineDash([]);
-    for (const h of game.hazards) {
-      if (h.used) continue;
-      c.beginPath();
-      c.arc(h.x, h.y, h.r, 0, Math.PI * 2);
-      c.strokeStyle =
-        h.kind === "coffee"
-          ? "#b18d6655"
-          : h.kind === "portal"
-            ? "#8e847e"
-            : "#d9dbc9";
-      c.lineWidth = h.kind === "coffee" ? 8 : 2;
-      c.stroke();
-      c.fillStyle = h.kind === "shield" ? "#fff" : "#736d5b";
-      c.font = "21px serif";
-      c.textAlign = "center";
-      c.fillText(
-        h.kind === "shield" ? "◇" : h.kind === "portal" ? "◌" : "",
-        h.x,
-        h.y + 7,
+    let preview = null;
+    if (
+      drag &&
+      Math.hypot(drag.start.x - drag.end.x, drag.start.y - drag.end.y) >= 4
+    ) {
+      const clone = JSON.parse(JSON.stringify(game));
+      preview = G.flick(
+        clone,
+        G.actor(clone),
+        drag.start.x - drag.end.x,
+        drag.start.y - drag.end.y,
       );
     }
-    for (const [i, p] of game.pens.entries()) {
-      c.globalAlpha = p.alive ? 1 : 0.12;
-      for (const seg of p.segments)
-        line(
-          seg.a,
-          seg.b,
-          game.players[i].color,
-          p.type === "fountain" ? 4 : 2.5,
-        );
-      c.save();
-      c.translate(p.x, p.y);
-      if (p.alive && i === game.turn) {
-        c.beginPath();
-        c.arc(0, 0, 24, 0, Math.PI * 2);
-        c.fillStyle = game.players[i].color + "18";
-        c.fill();
-      }
-      c.fillStyle = game.players[i].color;
-      c.fillRect(-5, -25, 10, 22);
-      c.beginPath();
-      c.moveTo(-5, -3);
-      c.lineTo(5, -3);
-      c.lineTo(0, 7);
-      c.closePath();
-      c.fill();
-      if (p.shield) {
-        c.strokeStyle = "#c5a64c";
-        c.lineWidth = 2;
-        c.strokeRect(-12, -31, 24, 45);
-      }
-      c.font = "12px sans-serif";
-      c.textAlign = "center";
-      c.fillText(game.players[i].name.slice(0, 15), 0, 23);
-      c.restore();
-      c.globalAlpha = 1;
-    }
-    if (drag) {
-      const dx = drag.start.x - drag.end.x,
-        dy = drag.start.y - drag.end.y,
-        power = Math.hypot(dx, dy);
-      if (power >= 4) {
-        const preview = JSON.parse(JSON.stringify(game));
-        const path = G.flick(preview, G.actor(preview), dx, dy);
-        c.setLineDash([5, 5]);
-        for (const seg of path) line(seg.a, seg.b, "#425d4b", 2);
-        c.setLineDash([]);
-      }
-      line(drag.start, drag.end, "#c09d68", 2);
-    }
+    PenRenderer.draw(c, penFrame?.state || game, {
+      drag,
+      preview,
+      frame: penFrame,
+      before: penMotion?.before,
+    });
   } else {
+    PenRenderer.paper(c, true);
     const n = game.size,
       step = 460 / (n - 1);
-    for (let y = 0; y < 600; y += 20)
-      line({ x: 0, y }, { x: 600, y }, "#c9d6cf55", 0.8);
-    for (let x = 0; x < 600; x += 20)
-      line({ x, y: 0 }, { x, y: 600 }, "#c9d6cf55", 0.8);
     for (let y = 0; y < n - 1; y++)
       for (let x = 0; x < n - 1; x++) {
         const k = y * (n - 1) + x,
@@ -1057,6 +1072,7 @@ function drawBoard() {
 setInterval(() => {
   syncClockPause();
   if (
+    penMotion ||
     screen !== "play" ||
     !game ||
     !["playing", "reveal", "guess"].includes(game.phase)
@@ -1084,6 +1100,7 @@ setInterval(() => {
   }
 }, 100);
 document.addEventListener("visibilitychange", () => {
+  if (penMotion) penMotion.lastTick = Date.now();
   if (document.hidden) {
     clearBoardInput();
     if (curtainOpen && privateContext) {
@@ -1091,7 +1108,8 @@ document.addEventListener("visibilitychange", () => {
       $("#reveal-chit").classList.remove("hidden");
       $("#hide-chit").classList.add("hidden");
     }
-    if (!online && game && game.phase !== "finished") pauseGame();
+    if (!online && game && (game.phase !== "finished" || penMotion))
+      pauseGame();
   }
   syncClockPause();
 });

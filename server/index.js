@@ -11,7 +11,7 @@ const ALPHABET='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 function createServer({now=Date.now}={}) {
   const rooms=new Map(),sessions=new Map();
   const root=path.resolve(__dirname,'..');
-  const files={'/':'web/index.html','/app.js':'web/app.js','/input.js':'web/input.js','/site.html':'dist/index.html','/style.css':'web/style.css','/core.js':'shared/core.js','/play.html':'dist/backbencher.html'};
+  const files={'/':'web/index.html','/app.js':'web/app.js','/input.js':'web/input.js','/pen-renderer.js':'web/pen-renderer.js','/site.html':'dist/index.html','/style.css':'web/style.css','/core.js':'shared/core.js','/play.html':'dist/backbencher.html'};
   const server=http.createServer((req,res)=>{
     const p=new URL(req.url,'http://localhost').pathname;
     if(p==='/health'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:true,rooms:rooms.size}));return;}

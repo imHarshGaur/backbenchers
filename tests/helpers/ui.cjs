@@ -20,7 +20,11 @@ function ui(t) {
   const run = (code) =>
     new Script(code).runInContext(dom.getInternalVMContext());
   const drawing = new Proxy(
-    { measureText: () => ({ width: 30 }) },
+    {
+      measureText: () => ({ width: 30 }),
+      createLinearGradient: () => ({ addColorStop() {} }),
+      createRadialGradient: () => ({ addColorStop() {} }),
+    },
     {
       get: (target, k) => (k in target ? target[k] : () => {}),
       set: (target, k, v) => ((target[k] = v), true),
@@ -41,6 +45,8 @@ function ui(t) {
     now: 100000,
     toFake: [
       "Date",
+      "requestAnimationFrame",
+      "cancelAnimationFrame",
       "setTimeout",
       "clearTimeout",
       "setInterval",
